@@ -41,11 +41,11 @@ make clean
 
 The `Makefile` auto-detects your platform and builds the appropriate shared library:
 
-| Platform | Output |
-|----------|--------|
-| Linux | `libhungarian.so` |
-| macOS | `libhungarian.dylib` |
-| Windows (MinGW) | `libhungarian.dll` |
+| Platform        | Output               |
+|-----------------|----------------------|
+| Linux           | `libhungarian.so`    |
+| macOS           | `libhungarian.dylib` |
+| Windows (MinGW) | `libhungarian.dll`   |
 
 **Manual build** (without Make):
 
@@ -68,7 +68,7 @@ make test
 
 This compiles `hungarian.f90` and `test_hungarian.f90` together, then runs the test suite. Expected output:
 
-```
+```text
 =======================================
  Hungarian Algorithm Test Suite
 =======================================
@@ -103,12 +103,12 @@ use hungarian_mod
 call hungarian_algorithm(cost_matrix, assignments, total_cost, info)
 ```
 
-| Argument | Type | Intent | Description |
-|----------|------|--------|-------------|
-| `cost_matrix` | `real(f64) :: (:,:)` | `in` | N×N cost matrix |
-| `assignments` | `integer :: (:)` | `out` | Assignment result: `assignments(i) = j` means row i → column j |
-| `total_cost` | `real(f64)` | `out` | Sum of assigned costs |
-| `info` | `integer` | `out` | Error code (see below) |
+| Argument      | Type                 | Intent | Description                                                           |
+|---------------|----------------------|--------|-----------------------------------------------------------------------|
+| `cost_matrix` | `real(f64) :: (:,:)` | `in`   | N×N cost matrix                                                       |
+| `assignments` | `integer :: (:)`     | `out`  | Assignment result: `assignments(i) = j` means row i → column j        |
+| `total_cost`  | `real(f64)`          | `out`  | Sum of assigned costs                                                 |
+| `info`        | `integer`            | `out`  | Error code (see below)                                                |
 
 **Example:**
 
@@ -192,7 +192,7 @@ g++ -O3 main.cpp -L. -lhungarian -Wl,-rpath,. -o example && ./example
 
 **Output:**
 
-```
+```text
 Total Cost: 140
 Worker 0 -> Job 2
 Worker 1 -> Job 1
@@ -202,13 +202,13 @@ Worker 3 -> Job 3
 
 ### Error Codes
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `HUNGARIAN_OK` | 0 | Success |
-| `HUNGARIAN_ERR_INVALID` | 1 | Invalid input (n < 0, NaN/Inf in matrix, null pointer) |
-| `HUNGARIAN_ERR_ALLOC` | 2 | Memory allocation failure |
-| `HUNGARIAN_ERR_NO_CONVERGE` | 3 | Algorithm did not converge within iteration limit |
-| `HUNGARIAN_ERR_NO_MATCH` | 4 | Perfect matching not found |
+| Constant                     | Value | Description                                             |
+|------------------------------|-------|---------------------------------------------------------|
+| `HUNGARIAN_OK`               | 0     | Success                                                 |
+| `HUNGARIAN_ERR_INVALID`      | 1     | Invalid input (n < 0, NaN/Inf in matrix, null pointer)  |
+| `HUNGARIAN_ERR_ALLOC`        | 2     | Memory allocation failure                               |
+| `HUNGARIAN_ERR_NO_CONVERGE`  | 3     | Algorithm did not converge within iteration limit       |
+| `HUNGARIAN_ERR_NO_MATCH`     | 4     | Perfect matching not found                              |
 
 ## Algorithm
 
@@ -225,7 +225,7 @@ Convergence is guaranteed within O(n) adjustment iterations for well-conditioned
 
 ## Project Structure
 
-```
+```text
 hungarian-algorithm-fortran/
 ├── hungarian.f90          # Core module: algorithm + C wrapper
 ├── test_hungarian.f90     # Test suite (15 tests)
@@ -239,4 +239,4 @@ hungarian-algorithm-fortran/
 
 ## License
 
-[MIT](LICENSE) © Chuan Tian
+[MIT](LICENSE)

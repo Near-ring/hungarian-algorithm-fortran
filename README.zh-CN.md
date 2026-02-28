@@ -42,7 +42,7 @@ make clean
 `Makefile` 会自动检测平台并构建对应的共享库：
 
 | 平台 | 输出文件 |
-|------|---------|
+| --- | --- |
 | Linux | `libhungarian.so` |
 | macOS | `libhungarian.dylib` |
 | Windows (MinGW) | `libhungarian.dll` |
@@ -68,7 +68,7 @@ make test
 
 此命令会编译 `hungarian.f90` 和 `test_hungarian.f90`，然后运行测试套件。预期输出：
 
-```
+```text
 =======================================
  Hungarian Algorithm Test Suite
 =======================================
@@ -104,7 +104,7 @@ call hungarian_algorithm(cost_matrix, assignments, total_cost, info)
 ```
 
 | 参数 | 类型 | Intent | 说明 |
-|------|------|--------|------|
+| --- | --- | --- | --- |
 | `cost_matrix` | `real(f64) :: (:,:)` | `in` | N×N 代价矩阵 |
 | `assignments` | `integer :: (:)` | `out` | 分配结果：`assignments(i) = j` 表示行 i 分配到列 j |
 | `total_cost` | `real(f64)` | `out` | 分配代价总和 |
@@ -192,7 +192,7 @@ g++ -O3 main.cpp -L. -lhungarian -Wl,-rpath,. -o example && ./example
 
 **输出：**
 
-```
+```text
 Total Cost: 140
 Worker 0 -> Job 2
 Worker 1 -> Job 1
@@ -203,7 +203,7 @@ Worker 3 -> Job 3
 ### 错误码
 
 | 常量 | 值 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | `HUNGARIAN_OK` | 0 | 成功 |
 | `HUNGARIAN_ERR_INVALID` | 1 | 无效输入（n < 0、矩阵含 NaN/Inf、空指针） |
 | `HUNGARIAN_ERR_ALLOC` | 2 | 内存分配失败 |
@@ -225,7 +225,7 @@ Worker 3 -> Job 3
 
 ## 项目结构
 
-```
+```text
 hungarian-algorithm-fortran/
 ├── hungarian.f90          # 核心模块：算法 + C 包装器
 ├── test_hungarian.f90     # 测试套件（15 个测试）
@@ -239,4 +239,4 @@ hungarian-algorithm-fortran/
 
 ## 许可证
 
-[MIT](LICENSE) © Chuan Tian
+[MIT](LICENSE)
