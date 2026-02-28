@@ -1,6 +1,5 @@
 # Hungarian Algorithm — Modern Fortran
 
-[![CI](https://github.com/chuantian/hungarian-algorithm-fortran/actions/workflows/ci.yml/badge.svg)](https://github.com/chuantian/hungarian-algorithm-fortran/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [中文文档](README.zh-CN.md)

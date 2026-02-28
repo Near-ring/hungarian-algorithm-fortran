@@ -24,9 +24,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gfortran
 
-      - name: Install gfortran (macOS)
+      - name: Setup gfortran (macOS)
         if: runner.os == 'macOS'
-        run: brew install gcc
+        run: |
+          brew list gcc &>/dev/null || brew install gcc
+          # symlink gfortran if not on PATH
+          if ! command -v gfortran &>/dev/null; then
+            ln -sf "$(brew --prefix gcc)/bin/gfortran-"* /usr/local/bin/gfortran
+          fi
 
       - name: Check compiler version
         run: gfortran --version
@@ -36,6 +41,3 @@ jobs:
 
       - name: Build and run tests
         run: make test
-
-      - name: Clean
-        run: make clean

@@ -1,6 +1,5 @@
 # 匈牙利算法 — Modern Fortran 实现
 
-[![CI](https://github.com/chuantian/hungarian-algorithm-fortran/actions/workflows/ci.yml/badge.svg)](https://github.com/chuantian/hungarian-algorithm-fortran/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [English](README.md)
