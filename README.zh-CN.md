@@ -145,7 +145,8 @@ void f90_hungarian_algorithm(
 );
 ```
 
-> **⚠️ 必须使用列主序：** 矩阵必须以列主序（Fortran 约定）传入。Eigen 矩阵默认即为列主序。对于行主序的 C 数组，需在调用前转置，或按 `matrix[col * n + row]` 方式存储。
+> [!IMPORTANT]
+> 矩阵必须以列主序（Fortran 约定）传入。Eigen 矩阵默认即为列主序。对于行主序的 C 数组，需在调用前转置，或按 `matrix[col * n + row]` 方式存储。
 
 **示例 (`main.cpp`)：**
 

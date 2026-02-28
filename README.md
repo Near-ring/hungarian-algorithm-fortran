@@ -145,7 +145,8 @@ void f90_hungarian_algorithm(
 );
 ```
 
-> **⚠️ Column-Major Order Required:** The matrix must be in column-major layout (Fortran convention). Eigen matrices are column-major by default. For row-major C arrays, transpose before calling or store as `matrix[col * n + row]`.
+> [!IMPORTANT]
+> The matrix must be in column-major layout (Fortran convention). Eigen matrices are column-major by default. For row-major C arrays, transpose before calling or store as `matrix[col * n + row]`.
 
 **Example (`main.cpp`):**
 
