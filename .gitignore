@@ -1,0 +1,27 @@
+# Fortran build artifacts
+*.o
+*.mod
+*.smod
+
+# Shared libraries
+*.so
+*.dylib
+*.dll
+
+# Static libraries
+*.a
+
+# Executables
+test_hungarian
+test_cpp
+
+# Editor/IDE
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gfortran (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran
+
+      - name: Setup gfortran (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew list gcc &>/dev/null || brew install gcc
+          # symlink gfortran if not on PATH
+          if ! command -v gfortran &>/dev/null; then
+            ln -sf "$(brew --prefix gcc)/bin/gfortran-"* /usr/local/bin/gfortran
+          fi
+
+      - name: Check compiler version
+        run: gfortran --version
+
+      - name: Build shared library
+        run: make lib
+
+      - name: Build and run tests
+        run: make test
