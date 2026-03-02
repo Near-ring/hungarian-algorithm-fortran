@@ -9,7 +9,7 @@
 program test_hungarian
    use hungarian_mod
    use, intrinsic :: ieee_arithmetic
-   use iso_c_binding, only: C_DOUBLE
+   use iso_c_binding
    implicit none
 
    integer, parameter :: f64 = C_DOUBLE
@@ -43,6 +43,14 @@ program test_hungarian
    ! --- Input validation ---
    call test_nan_rejection()
    call test_inf_rejection()
+
+   ! --- Error code coverage (C wrapper) ---
+   call test_c_wrapper_null_pointer()
+   call test_c_wrapper_negative_n()
+   call test_c_wrapper_n0()
+   call test_c_wrapper_normal()
+   call test_neg_inf_rejection()
+   call test_mixed_nan_inf()
 
    ! --- Brute force validation for small n ---
    call test_brute_force_2x2()
@@ -339,6 +347,115 @@ contains
 
       call report('Inf input rejected', info == HUNGARIAN_ERR_INVALID)
    end subroutine test_inf_rejection
+
+   ! =====================================================================
+   ! C wrapper tests via iso_c_binding — error code coverage
+   ! =====================================================================
+
+   ! --- Test: C wrapper null pointer → ERR_INVALID ---
+   subroutine test_c_wrapper_null_pointer()
+      real(f64), target :: mat(2,2)
+      integer(c_int32_t), target :: assign_arr(2)
+      real(c_double), target :: cost_val
+      integer(c_int32_t), target :: info_val
+      type(c_ptr) :: null_ptr
+
+      mat = 1.0_f64
+      null_ptr = c_null_ptr
+      info_val = 0
+
+      ! Pass null matrix pointer
+      call f90_hungarian_algorithm(null_ptr, int(2, c_int32_t), &
+         c_loc(assign_arr), c_loc(cost_val), c_loc(info_val))
+
+      call report('C wrapper: null pointer rejected', &
+         info_val == int(HUNGARIAN_ERR_INVALID, c_int32_t))
+   end subroutine test_c_wrapper_null_pointer
+
+   ! --- Test: C wrapper negative n → ERR_INVALID ---
+   subroutine test_c_wrapper_negative_n()
+      real(f64), target :: mat(1,1)
+      integer(c_int32_t), target :: assign_arr(1)
+      real(c_double), target :: cost_val
+      integer(c_int32_t), target :: info_val
+
+      mat(1,1) = 5.0_f64
+      info_val = 0
+
+      call f90_hungarian_algorithm(c_loc(mat), int(-1, c_int32_t), &
+         c_loc(assign_arr), c_loc(cost_val), c_loc(info_val))
+
+      call report('C wrapper: negative n rejected', &
+         info_val == int(HUNGARIAN_ERR_INVALID, c_int32_t))
+   end subroutine test_c_wrapper_negative_n
+
+   ! --- Test: C wrapper n=0 → OK ---
+   subroutine test_c_wrapper_n0()
+      real(f64), target :: mat(1,1)
+      integer(c_int32_t), target :: assign_arr(1)
+      real(c_double), target :: cost_val
+      integer(c_int32_t), target :: info_val
+
+      mat(1,1) = 0.0_f64
+      info_val = int(-1, c_int32_t)
+
+      call f90_hungarian_algorithm(c_loc(mat), int(0, c_int32_t), &
+         c_loc(assign_arr), c_loc(cost_val), c_loc(info_val))
+
+      call report('C wrapper: n=0 accepted (OK)', &
+         info_val == int(HUNGARIAN_OK, c_int32_t))
+   end subroutine test_c_wrapper_n0
+
+   ! --- Test: C wrapper normal call → OK ---
+   subroutine test_c_wrapper_normal()
+      real(f64), target :: mat(2,2)
+      integer(c_int32_t), target :: assign_arr(2)
+      real(c_double), target :: cost_val
+      integer(c_int32_t), target :: info_val
+
+      ! Column-major: [[1,3],[2,4]]
+      mat(1,1) = 1.0_f64; mat(2,1) = 3.0_f64
+      mat(1,2) = 2.0_f64; mat(2,2) = 4.0_f64
+      info_val = int(-1, c_int32_t)
+      cost_val = 0.0_f64
+
+      call f90_hungarian_algorithm(c_loc(mat), int(2, c_int32_t), &
+         c_loc(assign_arr), c_loc(cost_val), c_loc(info_val))
+
+      ! cost should be 5 (1+4 or 2+3)
+      call report('C wrapper: normal 2x2 (OK, cost=5)', &
+         info_val == int(HUNGARIAN_OK, c_int32_t) .and. &
+         abs(cost_val - 5.0_f64) < 1.0d-10)
+   end subroutine test_c_wrapper_normal
+
+   ! --- Test: Negative infinity rejection ---
+   subroutine test_neg_inf_rejection()
+      real(f64) :: cost(2, 2)
+      integer :: assign(2), info
+      real(f64) :: total_cost
+
+      cost = 1.0_f64
+      cost(1, 2) = ieee_value(1.0_f64, ieee_negative_inf)
+
+      call hungarian_algorithm(cost, assign, total_cost, info)
+
+      call report('-Inf input rejected', info == HUNGARIAN_ERR_INVALID)
+   end subroutine test_neg_inf_rejection
+
+   ! --- Test: Mixed NaN and Inf rejection ---
+   subroutine test_mixed_nan_inf()
+      real(f64) :: cost(3, 3)
+      integer :: assign(3), info
+      real(f64) :: total_cost
+
+      cost = 1.0_f64
+      cost(1, 1) = ieee_value(1.0_f64, ieee_quiet_nan)
+      cost(3, 3) = ieee_value(1.0_f64, ieee_positive_inf)
+
+      call hungarian_algorithm(cost, assign, total_cost, info)
+
+      call report('Mixed NaN+Inf rejected', info == HUNGARIAN_ERR_INVALID)
+   end subroutine test_mixed_nan_inf
 
    ! =====================================================================
    ! Brute-force validation helpers
