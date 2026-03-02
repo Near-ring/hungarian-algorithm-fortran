@@ -85,7 +85,7 @@ contains
    subroutine test_4x4_readme_example()
       implicit none
       real(f64) :: cost(4, 4)
-      integer :: assign(4), info
+      integer :: assign(4)
       real(f64) :: total_cost
       logical :: pass
 
@@ -99,11 +99,11 @@ contains
       cost(3, :) = [11.0_f64, 69.0_f64,  5.0_f64, 86.0_f64]
       cost(4, :) = [ 8.0_f64,  9.0_f64, 98.0_f64, 23.0_f64]
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 4, assign, total_cost)
 
-      pass = (info == HUNGARIAN_OK) .and. (abs(total_cost - 140.0_f64) < 1.0d-10)
+      pass = ieee_is_finite(total_cost) .and. (abs(total_cost - 140.0_f64) < 1.0d-10)
       ! Verify individual assignments sum to 140
-      if (info == HUNGARIAN_OK) then
+      if (ieee_is_finite(total_cost)) then
          pass = pass .and. all(assign > 0) .and. all(assign <= 4)
       end if
       call report('4x4 README example (cost=140)', pass)
@@ -115,14 +115,14 @@ contains
    subroutine test_1x1()
       implicit none
       real(f64) :: cost(1, 1)
-      integer :: assign(1), info
+      integer :: assign(1)
       real(f64) :: total_cost
 
       cost(1, 1) = 42.0_f64
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 1, assign, total_cost)
 
       call report('1x1 matrix', &
-         info == HUNGARIAN_OK .and. assign(1) == 1 .and. abs(total_cost - 42.0_f64) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. assign(1) == 1 .and. abs(total_cost - 42.0_f64) < 1.0d-10)
    end subroutine test_1x1
 
    ! =====================================================================
@@ -131,17 +131,17 @@ contains
    subroutine test_2x2_simple()
       implicit none
       real(f64) :: cost(2, 2)
-      integer :: assign(2), info
+      integer :: assign(2)
       real(f64) :: total_cost
 
       ! [[1, 2], [3, 4]] -> optimal: (1,1)+(2,2) = 1+4=5 or (1,2)+(2,1) = 2+3=5
       cost(1, :) = [1.0_f64, 2.0_f64]
       cost(2, :) = [3.0_f64, 4.0_f64]
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 2, assign, total_cost)
 
       call report('2x2 simple (cost=5)', &
-         info == HUNGARIAN_OK .and. abs(total_cost - 5.0_f64) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. abs(total_cost - 5.0_f64) < 1.0d-10)
    end subroutine test_2x2_simple
 
    ! =====================================================================
@@ -150,7 +150,7 @@ contains
    subroutine test_3x3_known()
       implicit none
       real(f64) :: cost(3, 3)
-      integer :: assign(3), info
+      integer :: assign(3)
       real(f64) :: total_cost
 
       ! [[10, 5, 13], [3, 7, 8], [6, 2, 9]]
@@ -166,10 +166,10 @@ contains
       cost(2, :) = [ 3.0_f64, 7.0_f64,  8.0_f64]
       cost(3, :) = [ 6.0_f64, 2.0_f64,  9.0_f64]
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 3, assign, total_cost)
 
       call report('3x3 known (cost=17)', &
-         info == HUNGARIAN_OK .and. abs(total_cost - 17.0_f64) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. abs(total_cost - 17.0_f64) < 1.0d-10)
    end subroutine test_3x3_known
 
    ! =====================================================================
@@ -178,7 +178,7 @@ contains
    subroutine test_5x5_known()
       implicit none
       real(f64) :: cost(5, 5)
-      integer :: assign(5), info
+      integer :: assign(5)
       real(f64) :: total_cost
 
       ! Classic example from assignment problem literature
@@ -192,12 +192,11 @@ contains
       ! Optimal via brute-force enumeration: cost = 72
       ! Assignment: (1,1)=7 + (2,4)=29 + (3,2)=7 + (4,3)=22 + (5,5)=7 = 72
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 5, assign, total_cost)
 
-      ! We accept the algorithm's result if info == OK and assignment is valid
       ! Cross-check: total_cost should be 72
       call report('5x5 known (cost=72)', &
-         info == HUNGARIAN_OK .and. abs(total_cost - 72.0_f64) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. abs(total_cost - 72.0_f64) < 1.0d-10)
    end subroutine test_5x5_known
 
    ! =====================================================================
@@ -206,13 +205,12 @@ contains
    subroutine test_n0()
       implicit none
       real(f64) :: cost(0, 0)
-      integer :: assign(0), info
+      integer :: assign(0)
       real(f64) :: total_cost
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 0, assign, total_cost)
 
-      call report('n=0 (trivial, no-op)', &
-         info == HUNGARIAN_OK .and. abs(total_cost) < 1.0d-10)
+      call report('n=0 (rejected/NaN)', ieee_is_nan(total_cost))
    end subroutine test_n0
 
    ! =====================================================================
@@ -221,7 +219,7 @@ contains
    subroutine test_negative_costs()
       implicit none
       real(f64) :: cost(3, 3)
-      integer :: assign(3), info
+      integer :: assign(3)
       real(f64) :: total_cost
 
       ! Hungarian algorithm works with any finite costs (including negative)
@@ -230,17 +228,12 @@ contains
       cost(3, :) = [-1.0_f64, -6.0_f64, -8.0_f64]
       ! Optimal: minimize => most negative
       ! (1,1)=-5 + (2,2)=-7 + (3,3)=-8 = -20
-      ! (1,1)=-5 + (2,3)=-4 + (3,2)=-6 = -15
-      ! (1,2)=-2 + (2,1)=-3 + (3,3)=-8 = -13
-      ! (1,2)=-2 + (2,3)=-4 + (3,1)=-1 = -7
-      ! (1,3)=-1 + (2,1)=-3 + (3,2)=-6 = -10
-      ! (1,3)=-1 + (2,2)=-7 + (3,1)=-1 = -9
       ! Minimum = -20
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 3, assign, total_cost)
 
       call report('Negative costs (cost=-20)', &
-         info == HUNGARIAN_OK .and. abs(total_cost - (-20.0_f64)) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. abs(total_cost - (-20.0_f64)) < 1.0d-10)
    end subroutine test_negative_costs
 
    ! =====================================================================
@@ -249,16 +242,16 @@ contains
    subroutine test_identical_costs()
       implicit none
       real(f64) :: cost(3, 3)
-      integer :: assign(3), info
+      integer :: assign(3)
       real(f64) :: total_cost
 
       cost = 7.0_f64
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 3, assign, total_cost)
 
       ! Any assignment is optimal, cost = 3 * 7 = 21
       call report('Identical costs (cost=21)', &
-         info == HUNGARIAN_OK .and. abs(total_cost - 21.0_f64) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. abs(total_cost - 21.0_f64) < 1.0d-10)
    end subroutine test_identical_costs
 
    ! =====================================================================
@@ -267,26 +260,18 @@ contains
    subroutine test_large_costs()
       implicit none
       real(f64) :: cost(3, 3)
-      integer :: assign(3), info
+      integer :: assign(3)
       real(f64) :: total_cost
 
       cost(1, :) = [1.0d12, 2.0d12, 3.0d12]
       cost(2, :) = [4.0d12, 5.0d12, 6.0d12]
       cost(3, :) = [7.0d12, 8.0d12, 9.0d12]
-      ! Optimal: (1,1)=1e12 + (2,2)=5e12 + (3,3)=9e12 = 15e12
-      ! Or: (1,3)=3e12 + (2,2)=5e12 + (3,1)=7e12 = 15e12
-      ! Or: (1,2)=2e12 + (2,1)=4e12 + (3,3)=9e12 = 15e12
-      ! Or: (1,2)=2e12 + (2,3)=6e12 + (3,1)=7e12 = 15e12
-      ! Or: (1,1)=1e12 + (2,3)=6e12 + (3,2)=8e12 = 15e12
-      ! Or: (1,3)=3e12 + (2,1)=4e12 + (3,2)=8e12 = 15e12
-      ! All permutations give 15e12!
-      ! Actually no - this is an arithmetic progression.
-      ! diag sum: 1+5+9 = 15, anti-diag: 3+5+7 = 15, etc. All = 15e12.
+      ! Optimal: 15e12.
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 3, assign, total_cost)
 
       call report('Large costs (1e12 scale)', &
-         info == HUNGARIAN_OK .and. abs(total_cost - 15.0d12) < 1.0d3)
+         ieee_is_finite(total_cost) .and. abs(total_cost - 15.0d12) < 1.0d3)
    end subroutine test_large_costs
 
    ! =====================================================================
@@ -295,15 +280,15 @@ contains
    subroutine test_zero_matrix()
       implicit none
       real(f64) :: cost(3, 3)
-      integer :: assign(3), info
+      integer :: assign(3)
       real(f64) :: total_cost
 
       cost = 0.0_f64
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 3, assign, total_cost)
 
       call report('Zero matrix (cost=0)', &
-         info == HUNGARIAN_OK .and. abs(total_cost) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. abs(total_cost) < 1.0d-10)
    end subroutine test_zero_matrix
 
    ! =====================================================================
@@ -312,15 +297,15 @@ contains
    subroutine test_nan_rejection()
       implicit none
       real(f64) :: cost(2, 2)
-      integer :: assign(2), info
+      integer :: assign(2)
       real(f64) :: total_cost
 
       cost = 1.0_f64
       cost(1, 1) = ieee_value(1.0_f64, ieee_quiet_nan)
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 2, assign, total_cost)
 
-      call report('NaN input rejected', info == HUNGARIAN_ERR_INVALID)
+      call report('NaN input rejected', ieee_is_nan(total_cost))
    end subroutine test_nan_rejection
 
    ! =====================================================================
@@ -329,15 +314,15 @@ contains
    subroutine test_inf_rejection()
       implicit none
       real(f64) :: cost(2, 2)
-      integer :: assign(2), info
+      integer :: assign(2)
       real(f64) :: total_cost
 
       cost = 1.0_f64
       cost(2, 2) = ieee_value(1.0_f64, ieee_positive_inf)
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 2, assign, total_cost)
 
-      call report('Inf input rejected', info == HUNGARIAN_ERR_INVALID)
+      call report('Inf input rejected', ieee_is_nan(total_cost))
    end subroutine test_inf_rejection
 
    ! =====================================================================
@@ -440,40 +425,40 @@ contains
    subroutine test_brute_force_2x2()
       implicit none
       real(f64) :: cost(2, 2)
-      integer :: assign(2), info
+      integer :: assign(2)
       real(f64) :: total_cost, bf_cost
 
       cost(1, :) = [14.0_f64, 5.0_f64]
       cost(2, :) = [8.0_f64,  7.0_f64]
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 2, assign, total_cost)
       bf_cost = brute_force_min_cost(cost, 2)
 
       call report('Brute force 2x2', &
-         info == HUNGARIAN_OK .and. abs(total_cost - bf_cost) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. abs(total_cost - bf_cost) < 1.0d-10)
    end subroutine test_brute_force_2x2
 
    subroutine test_brute_force_3x3()
       implicit none
       real(f64) :: cost(3, 3)
-      integer :: assign(3), info
+      integer :: assign(3)
       real(f64) :: total_cost, bf_cost
 
       cost(1, :) = [25.0_f64, 40.0_f64, 35.0_f64]
       cost(2, :) = [40.0_f64, 60.0_f64, 45.0_f64]
       cost(3, :) = [20.0_f64, 50.0_f64, 55.0_f64]
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 3, assign, total_cost)
       bf_cost = brute_force_min_cost(cost, 3)
 
       call report('Brute force 3x3', &
-         info == HUNGARIAN_OK .and. abs(total_cost - bf_cost) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. abs(total_cost - bf_cost) < 1.0d-10)
    end subroutine test_brute_force_3x3
 
    subroutine test_brute_force_4x4()
       implicit none
       real(f64) :: cost(4, 4)
-      integer :: assign(4), info
+      integer :: assign(4)
       real(f64) :: total_cost, bf_cost
 
       cost(1, :) = [90.0_f64, 75.0_f64, 75.0_f64, 80.0_f64]
@@ -481,11 +466,11 @@ contains
       cost(3, :) = [125.0_f64, 95.0_f64, 90.0_f64, 105.0_f64]
       cost(4, :) = [45.0_f64, 110.0_f64, 95.0_f64, 115.0_f64]
 
-      call hungarian_algorithm(cost, assign, total_cost, info)
+      call hungarian_algorithm(cost, 4, assign, total_cost)
       bf_cost = brute_force_min_cost(cost, 4)
 
       call report('Brute force 4x4', &
-         info == HUNGARIAN_OK .and. abs(total_cost - bf_cost) < 1.0d-10)
+         ieee_is_finite(total_cost) .and. abs(total_cost - bf_cost) < 1.0d-10)
    end subroutine test_brute_force_4x4
 
 end program test_hungarian
